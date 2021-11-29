@@ -89,7 +89,7 @@ $global:ContainerdUrl = "https://k8swin.blob.core.windows.net/k8s-windows/contai
 $global:ContainerdSdnPluginUrl = ""
 
 ## Docker Version
-$global:DockerVersion = "20.10.6"
+$global:DockerVersion = "20.10.8"
 
 ## ContainerD Usage
 $global:ContainerRuntime = "docker"
@@ -459,7 +459,7 @@ try
 
     # Postpone restart-computer so we can generate CSE response before restarting computer
     Write-Log "Setup Complete, reboot computer"
-    Postpone-RestartComputer
+    Start-ScheduledTask -TaskName "k8s-restart-job"
 }
 catch
 {

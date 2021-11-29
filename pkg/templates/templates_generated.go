@@ -5611,7 +5611,7 @@ try
 
     # Postpone restart-computer so we can generate CSE response before restarting computer
     Write-Log "Setup Complete, reboot computer"
-    Postpone-RestartComputer
+    Start-ScheduledTask -TaskName "k8s-restart-job"
 }
 catch
 {
