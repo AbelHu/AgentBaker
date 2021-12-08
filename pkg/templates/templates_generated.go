@@ -5811,6 +5811,7 @@ function Retry-Command {
 
     for ($i = 0; ; ) {
         try {
+            Write-Log "Retry $i : $command $Args"
             return & $Command @Args
         }
         catch {
