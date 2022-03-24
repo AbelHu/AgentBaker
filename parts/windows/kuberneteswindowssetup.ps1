@@ -66,6 +66,9 @@ param(
     [string]
     $UserAssignedClientID
 )
+Write-Host "Getting MTU size"
+netsh interface ipv4 show subinterfaces
+
 # Do not parse the start time from $LogFile to simplify the logic
 $StartTime=Get-Date
 $global:ExitCode=0
@@ -205,6 +208,9 @@ try
 {
     Write-Log ".\CustomDataSetupScript.ps1 -MasterIP $MasterIP -KubeDnsServiceIp $KubeDnsServiceIp -MasterFQDNPrefix $MasterFQDNPrefix -Location $Location -AADClientId $AADClientId -NetworkAPIVersion $NetworkAPIVersion -TargetEnvironment $TargetEnvironment"
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     # Download CSE function scripts
     Write-Log "Getting CSE scripts"
     $tempfile = 'c:\csescripts.zip'
@@ -220,6 +226,9 @@ try
     . c:\AzureData\windows\kubeletfunc.ps1
     . c:\AzureData\windows\kubernetesfunc.ps1
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     # Exit early if the script has been executed
     if (Test-Path -Path $CSEResultFilePath -PathType Leaf) {
         Write-Log "The script has been executed before, will exit without doing anything."
@@ -233,17 +242,32 @@ try
         Install-OpenSSH -SSHKeys $SSHKeys
     }
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     Write-Log "Apply telemetry data setting"
     Set-TelemetrySetting -WindowsTelemetryGUID $global:WindowsTelemetryGUID
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     Write-Log "Resize os drive if possible"
     Resize-OSDrive
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     Write-Log "Initialize data disks"
     Initialize-DataDisks
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     Write-Log "Create required data directories as needed"
     Initialize-DataDirectories
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     Create-Directory -FullPath "c:\k"
     Write-Log "Remove `"NT AUTHORITY\Authenticated Users`" write permissions on files in c:\k"
@@ -255,10 +279,19 @@ try
     icacls.exe "c:\k"
     Get-ProvisioningScripts
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     Write-KubeClusterConfig -MasterIP $MasterIP -KubeDnsServiceIp $KubeDnsServiceIp
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     Write-Log "Download kubelet binaries and unzip"
     Get-KubePackage -KubeBinariesSASURL $global:KubeBinariesPackageSASURL
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     # This overwrites the binaries that are downloaded from the custom packge with binaries.
     # The custom package has a few files that are necessary for future steps (nssm.exe)
@@ -268,6 +301,9 @@ try
         Write-Log "Overwriting kube node binaries from $global:WindowsKubeBinariesURL"
         Get-KubeBinaries -KubeBinariesURL $global:WindowsKubeBinariesURL
     }
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     if ($useContainerD) {
         Write-Log "Installing ContainerD"
@@ -283,6 +319,9 @@ try
         Install-Docker -DockerVersion $global:DockerVersion
         Set-DockerLogFileOptions
     }
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     # For AKSClustomCloud, TargetEnvironment must be set to AzureStackCloud
     Write-Log "Write Azure cloud provider config"
@@ -308,6 +347,9 @@ try
         -ExcludeMasterFromStandardLB $global:ExcludeMasterFromStandardLB `
         -TargetEnvironment {{if IsAKSCustomCloud}}"AzureStackCloud"{{else}}$TargetEnvironment{{end}} 
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     # we borrow the logic of AzureStackCloud to achieve AKSCustomCloud. 
     # In case of AKSCustomCloud, customer cloud env will be loaded from azurestackcloud.json 
     {{if IsAKSCustomCloud}}
@@ -322,9 +364,15 @@ try
     Write-CACert -CACertificate $global:CACertificate `
         -KubeDir $global:KubeDir
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     if ($global:EnableCsiProxy) {
         New-CsiProxyService -CsiProxyPackageUrl $global:CsiProxyUrl -KubeDir $global:KubeDir
     }
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     if ($global:TLSBootstrapToken) {
         Write-Log "Write TLS bootstrap kubeconfig"
@@ -342,6 +390,9 @@ try
         Write-Log "Write kube config"
     }
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     Write-KubeConfig -CACertificate $global:CACertificate `
         -KubeDir $global:KubeDir `
         -MasterFQDNPrefix $MasterFQDNPrefix `
@@ -350,12 +401,18 @@ try
         -AgentCertificate $global:AgentCertificate
 
     if ($global:EnableHostsConfigAgent) {
-            Write-Log "Starting hosts config agent"
-            New-HostsConfigService
-        }
+        Write-Log "Starting hosts config agent"
+        New-HostsConfigService
+    }
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     Write-Log "Create the Pause Container kubletwin/pause"
     New-InfraContainer -KubeDir $global:KubeDir -ContainerRuntime $global:ContainerRuntime
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     if (-not (Test-ContainerImageExists -Image "kubletwin/pause" -ContainerRuntime $global:ContainerRuntime)) {
         Write-Log "Could not find container with name kubletwin/pause"
@@ -369,17 +426,29 @@ try
         Set-ExitCode -ExitCode $global:WINDOWS_CSE_ERROR_PAUSE_IMAGE_NOT_EXIST -ErrorMessage "kubletwin/pause container does not exist!"
     }
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     Write-Log "Configuring networking with NetworkPlugin:$global:NetworkPlugin"
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     # Configure network policy.
     Get-HnsPsm1 -HNSModule $global:HNSModule
     Import-Module $global:HNSModule
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     Write-Log "Installing Azure VNet plugins"
     Install-VnetPlugins -AzureCNIConfDir $global:AzureCNIConfDir `
         -AzureCNIBinDir $global:AzureCNIBinDir `
         -VNetCNIPluginsURL $global:VNetCNIPluginsURL
 
+        Write-Host "Getting MTU size"
+        netsh interface ipv4 show subinterfaces
+    
     Set-AzureCNIConfig -AzureCNIConfDir $global:AzureCNIConfDir `
         -KubeDnsSearchPath $global:KubeDnsSearchPath `
         -KubeClusterCIDR $global:KubeClusterCIDR `
@@ -387,6 +456,9 @@ try
         -VNetCIDR $global:VNetCIDR `
         -IsDualStackEnabled $global:IsDualStackEnabled
 
+        Write-Host "Getting MTU size"
+        netsh interface ipv4 show subinterfaces
+    
     if ($TargetEnvironment -ieq "AzureStackCloud") {
         GenerateAzureStackCNIConfig `
             -TenantId $global:TenantId `
@@ -400,22 +472,40 @@ try
             -IdentitySystem "{{ GetIdentitySystem }}"
     }
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     New-ExternalHnsNetwork -IsDualStackEnabled $global:IsDualStackEnabled
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     Install-KubernetesServices `
         -KubeDir $global:KubeDir `
         -ContainerRuntime $global:ContainerRuntime
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+    
     Get-LogCollectionScripts
 
     Write-Log "Disable Internet Explorer compat mode and set homepage"
     Set-Explorer
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     Write-Log "Adjust pagefile size"
     Adjust-PageFileSize
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     Write-Log "Start preProvisioning script"
     PREPROVISION_EXTENSION
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     Write-Log "Update service failure actions"
     Update-ServiceFailureActions -ContainerRuntime $global:ContainerRuntime
@@ -423,6 +513,9 @@ try
     Register-LogsCleanupScriptTask
     Register-NodeResetScriptTask
     Update-DefenderPreferences
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     if ($windowsSecureTlsEnabled) {
         Write-Host "Enable secure TLS protocols"
@@ -435,11 +528,17 @@ try
         }
     }
 
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
     Enable-FIPSMode -FipsEnabled $fipsEnabled
     if ($global:WindowsGmsaPackageUrl) {
         Write-Log "Start to install Windows gmsa package"
         Install-GmsaPlugin -GmsaPackageUrl $global:WindowsGmsaPackageUrl
     }
+
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
 
     Check-APIServerConnectivity -MasterIP $MasterIP
 
@@ -463,6 +562,9 @@ try
     # Postpone restart-computer so we can generate CSE response before restarting computer
     Write-Log "Setup Complete, reboot computer"
     Postpone-RestartComputer
+    Write-Host "Getting MTU size"
+    netsh interface ipv4 show subinterfaces
+
 }
 catch
 {
