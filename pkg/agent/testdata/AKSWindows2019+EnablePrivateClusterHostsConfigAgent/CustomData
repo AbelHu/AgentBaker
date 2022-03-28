@@ -390,69 +390,10 @@ try
             -IdentitySystem "azure_ad"
     }
 
-    New-ExternalHnsNetwork -IsDualStackEnabled $global:IsDualStackEnabled
-
-    Install-KubernetesServices `
-        -KubeDir $global:KubeDir `
-        -ContainerRuntime $global:ContainerRuntime
-
-    Get-LogCollectionScripts
-
-    Write-Log "Disable Internet Explorer compat mode and set homepage"
-    Set-Explorer
-
-    Write-Log "Adjust pagefile size"
-    Adjust-PageFileSize
-
-    Write-Log "Start preProvisioning script"
-    
-
-    Write-Log "Update service failure actions"
-    Update-ServiceFailureActions -ContainerRuntime $global:ContainerRuntime
-    Adjust-DynamicPortRange
-    Register-LogsCleanupScriptTask
-    Register-NodeResetScriptTask
-    Update-DefenderPreferences
-
-    if ($windowsSecureTlsEnabled) {
-        Write-Host "Enable secure TLS protocols"
-        try {
-            . C:\k\windowssecuretls.ps1
-            Enable-SecureTls
-        }
-        catch {
-            Set-ExitCode -ExitCode $global:WINDOWS_CSE_ERROR_ENABLE_SECURE_TLS -ErrorMessage $_
-        }
-    }
-
-    Enable-FIPSMode -FipsEnabled $fipsEnabled
-    if ($global:WindowsGmsaPackageUrl) {
-        Write-Log "Start to install Windows gmsa package"
-        Install-GmsaPlugin -GmsaPackageUrl $global:WindowsGmsaPackageUrl
-    }
-
-    Check-APIServerConnectivity -MasterIP $MasterIP
-
-    if ($global:WindowsCalicoPackageURL) {
-        Write-Log "Start calico installation"
-        Start-InstallCalico -RootDir "c:\" -KubeServiceCIDR $global:KubeServiceCIDR -KubeDnsServiceIp $KubeDnsServiceIp
-    }
-
-    if (Test-Path $CacheDir)
-    {
-        Write-Log "Removing aks-engine bits cache directory"
-        Remove-Item $CacheDir -Recurse -Force
-    }
-
-    if ($global:TLSBootstrapToken) {
-        Write-Log "Removing temporary kube config"
-        $kubeConfigFile = [io.path]::Combine($KubeDir, "config")
-        Remove-Item $kubeConfigFile
-    }
+    netsh interface ipv4 show subinterfaces
 
     # Postpone restart-computer so we can generate CSE response before restarting computer
-    Write-Log "Setup Complete, reboot computer"
-    Postpone-RestartComputer
+    Write-Log "Setup Complete, do not reboot computer"
 }
 catch
 {
