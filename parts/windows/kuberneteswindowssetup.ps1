@@ -279,7 +279,7 @@ try
             $cniBinPath = $global:CNIPath
             $cniConfigPath = $global:CNIConfigPath
         }
-        Install-Containerd -ContainerdUrl $global:ContainerdUrl -CNIBinDir $cniBinPath -CNIConfDir $cniConfigPath -KubeDir $global:KubeDir
+        Install-Containerd-Based-On-Kubernetes-Version -ContainerdUrl $global:ContainerdUrl -CNIBinDir $cniBinPath -CNIConfDir $cniConfigPath -KubeDir $global:KubeDir -KubernetesVersion $global:KubeBinariesVersion
     } else {
         Write-Log "Install docker"
         Install-Docker -DockerVersion $global:DockerVersion
