@@ -6539,6 +6539,8 @@ try
         Remove-Item $kubeConfigFile
     }
 
+    throw "Simulate an error"
+    
     if ($global:IsNotRebootWindowsNode) {
         Write-Log "Setup Complete, starting NodeResetScriptTask to register Winodws node without reboot"
         Start-ScheduledTask -TaskName "k8s-restart-job"
