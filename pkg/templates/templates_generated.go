@@ -6042,7 +6042,7 @@ $inputFile = '%SYSTEMDRIVE%\AzureData\CustomData.bin';
 $outputFile = '%SYSTEMDRIVE%\AzureData\CustomDataSetupScript.ps1';
 Copy-Item $inputFile $outputFile;
 Invoke-Expression('{0} {1}' -f $outputFile, $arguments);
-\" >> %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log 2>&1; $code=(Get-Content %SYSTEMDRIVE%\AzureData\CSEResult.log); exit $code`)
+\" >> %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log 2>&1; Compress-Archive %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log %SYSTEMDRIVE%\AzureData\WindowsAKSCSElogs.zip; %SYSTEMDRIVE%\AzureData\windows\sendlogs.ps1 -Path %SYSTEMDRIVE%\AzureData\WindowsAKSCSElogs.zip; $code=(Get-Content %SYSTEMDRIVE%\AzureData\CSEResult.log); exit $code`)
 
 func windowsCsecmdPs1Bytes() ([]byte, error) {
 	return _windowsCsecmdPs1, nil
@@ -6610,9 +6610,12 @@ var _windowsSendlogsPs1 = []byte(`<#
 [CmdletBinding()]
 param(
     [string]
-    [ValidateScript({Test-Path $_})]
     $Path
 )
+
+if (!(Test-Path $Path)) {
+    return
+}
 
 $GoalStateArgs = @{
     "Method"="Get";
