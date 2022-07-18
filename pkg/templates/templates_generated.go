@@ -6155,6 +6155,7 @@ $arguments = '
 -CSEResultFilePath %SYSTEMDRIVE%\AzureData\CSEResult.log';
 $inputFile = '%SYSTEMDRIVE%\AzureData\CustomData.bin';
 $outputFile = '%SYSTEMDRIVE%\AzureData\CustomDataSetupScript.ps1';
+if (!(Test-Path $inputFile)) { echo 49 | Out-File -FilePath '%SYSTEMDRIVE%\AzureData\CSEResult.log' -Encoding utf8; exit; };
 Copy-Item $inputFile $outputFile;
 Invoke-Expression('{0} {1}' -f $outputFile, $arguments);
 \" >> %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log 2>&1; $code=(Get-Content %SYSTEMDRIVE%\AzureData\CSEResult.log); exit $code`)
@@ -6700,6 +6701,25 @@ finally
     # $JsonString = "ExitCode: `+"`"+`"{0}`+"`"+`", Output: `+"`"+`"{1}`+"`"+`", Error: `+"`"+`"{2}`+"`"+`", ExecDuration: `+"`"+`"{3}`+"`"+`"" -f $global:ExitCode, "", $global:ErrorMessage, $ExecutionDuration.TotalSeconds
     Write-Log "Generate CSE result to $CSEResultFilePath : $global:ExitCode"
     echo $global:ExitCode | Out-File -FilePath $CSEResultFilePath -Encoding utf8
+
+    try {
+        # Flush stdout to C:\AzureData\CustomDataSetupScript.log 
+        [Console]::Out.Flush()
+
+        if ($global:ExitCode -ne 0) {
+            # Upload the failed CSE log
+            # CustomDataSetupScript.log is still being opened by this script so we need to copy it before compressing it.
+            Copy-Item C:\AzureData\CustomDataSetupScript.log $env:TEMP\CustomDataSetupScript.log
+            Compress-Archive $env:TEMP\CustomDataSetupScript.log $env:TEMP\AKSWindowsCSELogs.zip
+            C:\AzureData\windows\sendlogs.ps1 %TEMP%\AKSWindowsCSELogs.zip
+        } elseif (Get-ScheduledTask -TaskName 'aks-log-generator-task' -ErrorAction Ignore) {
+            # Upload the full node logs if it succeeds and it is enabled
+            Start-ScheduledTask -TaskName 'aks-log-generator-task'
+        }
+    } catch {
+        # This should not impact the node provisioning result
+        Write-Log "Failed to upload CustomDataSetupScript.log. $_"
+    }
 }
 
 `)
@@ -6732,9 +6752,12 @@ var _windowsSendlogsPs1 = []byte(`<#
 [CmdletBinding()]
 param(
     [string]
-    [ValidateScript({Test-Path $_})]
     $Path
 )
+
+if (!(Test-Path $Path)) {
+    return
+}
 
 $GoalStateArgs = @{
     "Method"="Get";
@@ -6825,6 +6848,7 @@ $global:WINDOWS_CSE_ERROR_CONTAINERD_BINARY_EXIST=45
 $global:WINDOWS_CSE_ERROR_SET_TCP_EXCLUDE_PORT_RANGE=46
 $global:WINDOWS_CSE_ERROR_SET_UDP_DYNAMIC_PORT_RANGE=47
 $global:WINDOWS_CSE_ERROR_SET_UDP_EXCLUDE_PORT_RANGE=48
+$global:WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN=49 # Return this error code in csecmd.ps1 when C:\AzureData\CustomData.bin does not exist
 
 # NOTE: KubernetesVersion does not contain "v"
 $global:MinimalKubernetesVersionWithLatestContainerd = "1.30.0" # Will change it to the correct version when we support new Windows containerd version

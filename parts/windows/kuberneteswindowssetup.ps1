@@ -524,5 +524,25 @@ finally
     # $JsonString = "ExitCode: `"{0}`", Output: `"{1}`", Error: `"{2}`", ExecDuration: `"{3}`"" -f $global:ExitCode, "", $global:ErrorMessage, $ExecutionDuration.TotalSeconds
     Write-Log "Generate CSE result to $CSEResultFilePath : $global:ExitCode"
     echo $global:ExitCode | Out-File -FilePath $CSEResultFilePath -Encoding utf8
+
+    try {
+        # Flush stdout to C:\AzureData\CustomDataSetupScript.log 
+        [Console]::Out.Flush()
+
+        if ($global:ExitCode -ne 0) {
+            Write-Log "Uploading the failed CSE log immediately"
+            # CustomDataSetupScript.log is still being opened by this script so we need to copy it before compressing it.
+            Copy-Item C:\AzureData\CustomDataSetupScript.log $env:TEMP\CustomDataSetupScript.log
+            Compress-Archive $env:TEMP\CustomDataSetupScript.log $env:TEMP\AKSWindowsCSELogs.zip
+            C:\AzureData\windows\sendlogs.ps1 %TEMP%\AKSWindowsCSELogs.zip
+        } elseif (Get-ScheduledTask -TaskName 'aks-log-generator-task' -ErrorAction Ignore) {
+            Write-Log "Start the scheduled task aks-log-generator-task to upload the CSE log immediately"
+            # Upload the full node logs if it succeeds and it is enabled
+            Start-ScheduledTask -TaskName 'aks-log-generator-task'
+        }
+    } catch {
+        # This should not impact the node provisioning result
+        Write-Log "Failed to upload CustomDataSetupScript.log. $_"
+    }
 }
 

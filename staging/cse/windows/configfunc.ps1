@@ -466,3 +466,30 @@ function CopyFileFromCache {
         Write-Log "WARNING: $FileName is missed in cached folder $global:CacheDir"
     }
 }
+
+function Register-LogCollectorScriptTask {
+    Param(
+        [Parameter(Mandatory = $true)][int]
+        $IntervalInMinutes
+    )
+    Write-Log "Creating a scheduled task to run loggenerator.ps1"
+
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-File `"c:\k\loggenerator.ps1`""
+    $principal = New-ScheduledTaskPrincipal -UserId SYSTEM -LogonType ServiceAccount -RunLevel Highest
+    $trigger = New-JobTrigger -Once -At (Get-Date).Date -RepeatIndefinitely -RepetitionInterval (New-TimeSpan -Minutes $IntervalInMinutes)
+    $definition = New-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -Description "aks-log-generator-task"
+    Register-ScheduledTask -TaskName "aks-log-generator-task" -InputObject $definition
+}
+
+function Enable-GuestVMLogs {
+    Param(
+        [Parameter(Mandatory = $true)][int]
+        $IntervalInMinutes
+    )
+    if ($IntervalInMinutes -le 0) {
+        Write-Log "Do not add AKS logs in GuestVMLogs"
+        return
+    }
+
+    Register-LogCollectorScriptTask -IntervalInMinutes $IntervalInMinutes
+}
