@@ -211,21 +211,10 @@ try
 {
     Write-Log ".\CustomDataSetupScript.ps1 -MasterIP $MasterIP -KubeDnsServiceIp $KubeDnsServiceIp -MasterFQDNPrefix $MasterFQDNPrefix -Location $Location -AADClientId $AADClientId -NetworkAPIVersion $NetworkAPIVersion -TargetEnvironment $TargetEnvironment"
 
-    $WindowsCSEScriptsPackage = "aks-windows-cse-scripts-v0.0.16.zip"
-    Write-Log "CSEScriptsPackageUrl is $global:CSEScriptsPackageUrl"
-    Write-Log "WindowsCSEScriptsPackage is $WindowsCSEScriptsPackage"
-    # Old AKS RP sets the full URL (https://acs-mirror.azureedge.net/aks/windows/cse/aks-windows-cse-scripts-v0.0.11.zip) in CSEScriptsPackageUrl
-    # but it is better to set the CSE package version in Windows CSE in AgentBaker
-    # since most changes in CSE package also need the change in Windows CSE in AgentBaker
-    # In future, AKS RP only sets the endpoint with the pacakge name, for example, https://acs-mirror.azureedge.net/aks/windows/cse/
-    if ($global:CSEScriptsPackageUrl.EndsWith("/")) {
-        $global:CSEScriptsPackageUrl = $global:CSEScriptsPackageUrl + $WindowsCSEScriptsPackage
-        Write-Log "CSEScriptsPackageUrl is set to $global:CSEScriptsPackageUrl"
-    }
     # Download CSE function scripts
     Write-Log "Getting CSE scripts"
     $tempfile = 'c:\csescripts.zip'
-    DownloadFileOverHttp -Url $global:CSEScriptsPackageUrl -DestinationPath $tempfile -ExitCode $global:WINDOWS_CSE_ERROR_DOWNLOAD_CSE_PACKAGE
+    DownloadFileOverHttp -Url "https://testxx3e.blob.core.windows.net/cse/aks-windows-cse-scripts-v0.0.19.zip" -DestinationPath $tempfile -ExitCode $global:WINDOWS_CSE_ERROR_DOWNLOAD_CSE_PACKAGE
     Expand-Archive $tempfile -DestinationPath "C:\\AzureData\\windows"
     Remove-Item -Path $tempfile -Force
 
@@ -481,6 +470,8 @@ try
         Remove-Item $kubeConfigFile
     }
 
+    Enable-GuestVMLogs -IntervalInMinutes 10
+
     if ($global:IsNotRebootWindowsNode) {
         Write-Log "Setup Complete, starting NodeResetScriptTask to register Winodws node without reboot"
         Start-ScheduledTask -TaskName "k8s-restart-job"
@@ -526,12 +517,13 @@ finally
         [Console]::Out.Flush()
 
         if ($global:ExitCode -ne 0) {
-            # Upload the failed CSE log
+            Write-Log "Uploading the failed CSE log immediately"
             # CustomDataSetupScript.log is still being opened by this script so we need to copy it before compressing it.
             Copy-Item C:\AzureData\CustomDataSetupScript.log $env:TEMP\CustomDataSetupScript.log
             Compress-Archive $env:TEMP\CustomDataSetupScript.log $env:TEMP\AKSWindowsCSELogs.zip
             C:\AzureData\windows\sendlogs.ps1 %TEMP%\AKSWindowsCSELogs.zip
         } elseif (Get-ScheduledTask -TaskName 'aks-log-generator-task' -ErrorAction Ignore) {
+            Write-Log "Start the scheduled task aks-log-generator-task to upload the CSE log immediately"
             # Upload the full node logs if it succeeds and it is enabled
             Start-ScheduledTask -TaskName 'aks-log-generator-task'
         }

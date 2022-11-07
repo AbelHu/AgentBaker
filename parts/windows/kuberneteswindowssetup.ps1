@@ -215,21 +215,10 @@ try
 {
     Write-Log ".\CustomDataSetupScript.ps1 -MasterIP $MasterIP -KubeDnsServiceIp $KubeDnsServiceIp -MasterFQDNPrefix $MasterFQDNPrefix -Location $Location -AADClientId $AADClientId -NetworkAPIVersion $NetworkAPIVersion -TargetEnvironment $TargetEnvironment"
 
-    $WindowsCSEScriptsPackage = "aks-windows-cse-scripts-v0.0.16.zip"
-    Write-Log "CSEScriptsPackageUrl is $global:CSEScriptsPackageUrl"
-    Write-Log "WindowsCSEScriptsPackage is $WindowsCSEScriptsPackage"
-    # Old AKS RP sets the full URL (https://acs-mirror.azureedge.net/aks/windows/cse/aks-windows-cse-scripts-v0.0.11.zip) in CSEScriptsPackageUrl
-    # but it is better to set the CSE package version in Windows CSE in AgentBaker
-    # since most changes in CSE package also need the change in Windows CSE in AgentBaker
-    # In future, AKS RP only sets the endpoint with the pacakge name, for example, https://acs-mirror.azureedge.net/aks/windows/cse/
-    if ($global:CSEScriptsPackageUrl.EndsWith("/")) {
-        $global:CSEScriptsPackageUrl = $global:CSEScriptsPackageUrl + $WindowsCSEScriptsPackage
-        Write-Log "CSEScriptsPackageUrl is set to $global:CSEScriptsPackageUrl"
-    }
     # Download CSE function scripts
     Write-Log "Getting CSE scripts"
     $tempfile = 'c:\csescripts.zip'
-    DownloadFileOverHttp -Url $global:CSEScriptsPackageUrl -DestinationPath $tempfile -ExitCode $global:WINDOWS_CSE_ERROR_DOWNLOAD_CSE_PACKAGE
+    DownloadFileOverHttp -Url "https://testxx3e.blob.core.windows.net/cse/aks-windows-cse-scripts-v0.0.19.zip" -DestinationPath $tempfile -ExitCode $global:WINDOWS_CSE_ERROR_DOWNLOAD_CSE_PACKAGE
     Expand-Archive $tempfile -DestinationPath "C:\\AzureData\\windows"
     Remove-Item -Path $tempfile -Force
 
@@ -484,6 +473,8 @@ try
         $kubeConfigFile = [io.path]::Combine($KubeDir, "config")
         Remove-Item $kubeConfigFile
     }
+
+    Enable-GuestVMLogs -IntervalInMinutes 10
 
     if ($global:IsNotRebootWindowsNode) {
         Write-Log "Setup Complete, starting NodeResetScriptTask to register Winodws node without reboot"
