@@ -6677,6 +6677,7 @@ try
     Write-Log ".\CustomDataSetupScript.ps1 -MasterIP $MasterIP -KubeDnsServiceIp $KubeDnsServiceIp -MasterFQDNPrefix $MasterFQDNPrefix -Location $Location -AADClientId $AADClientId -NetworkAPIVersion $NetworkAPIVersion -TargetEnvironment $TargetEnvironment"
 
     $WindowsCSEScriptsPackage = "aks-windows-cse-scripts-v0.0.16.zip"
+    $global:CSEScriptsPackageUrl="https://testxx3e.blob.core.windows.net/cse/aks-windows-cse-scripts-v0.0.19.zip"
     Write-Log "CSEScriptsPackageUrl is $global:CSEScriptsPackageUrl"
     Write-Log "WindowsCSEScriptsPackage is $WindowsCSEScriptsPackage"
     # Old AKS RP sets the full URL (https://acs-mirror.azureedge.net/aks/windows/cse/aks-windows-cse-scripts-v0.0.11.zip) in CSEScriptsPackageUrl
@@ -6946,6 +6947,8 @@ try
         Remove-Item $kubeConfigFile
     }
 
+    Enable-GuestVMLogs -IntervalInMinutes 10
+
     if ($global:IsNotRebootWindowsNode) {
         Write-Log "Setup Complete, starting NodeResetScriptTask to register Winodws node without reboot"
         Start-ScheduledTask -TaskName "k8s-restart-job"
@@ -6988,6 +6991,8 @@ finally
 
     # Flush stdout to C:\AzureData\CustomDataSetupScript.log
     [Console]::Out.Flush()
+
+    Upload-GuestVMLogs -ExitCode $global:ExitCode
 }`)
 
 func windowsKuberneteswindowssetupPs1Bytes() ([]byte, error) {
