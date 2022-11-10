@@ -840,6 +840,12 @@ func getContainerServiceFuncMap(config *datamodel.NodeBootstrappingConfiguration
 			}
 			return []string{}
 		},
+		"GetLogGeneratorIntervalInMinutes": func() uint32 {
+			if cs.Properties.WindowsProfile != nil {
+				return cs.Properties.WindowsProfile.GetLogGeneratorIntervalInMinutes()
+			}
+			return 0
+		},
 	}
 }
 
