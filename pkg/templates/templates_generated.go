@@ -7544,10 +7544,10 @@ $arguments = '
 -CSEResultFilePath %SYSTEMDRIVE%\AzureData\CSEResult.log';
 $inputFile = '%SYSTEMDRIVE%\AzureData\CustomData.bin';
 $outputFile = '%SYSTEMDRIVE%\AzureData\CustomDataSetupScript.ps1';
-if (!(Test-Path $inputFile)) { echo 'AKS Windows CSE ExitCode: 49 (WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN), ErrorMessage: %SYSTEMDRIVE%\AzureData\CustomData.bin does not exist.' | Out-File -FilePath '%SYSTEMDRIVE%\AzureData\CSEResult.log' -Encoding utf8; exit; };
+if (!(Test-Path $inputFile)) { throw 'ExitCode: `+"`"+`"49`+"`"+`", Output: `+"`"+`"WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN`+"`"+`", Error: `+"`"+`"%SYSTEMDRIVE%\AzureData\CustomData.bin does not exist.`+"`"+`"'; };
 Copy-Item $inputFile $outputFile;
 Invoke-Expression('{0} {1}' -f $outputFile, $arguments);
-\" >> %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log 2>&1; if (!(Test-Path %SYSTEMDRIVE%\AzureData\CSEResult.log)) { throw 'AKS Windows CSE ExitCode: 50 (WINDOWS_CSE_ERROR_NO_CSE_RESULT_LOG), ErrorMessage: %SYSTEMDRIVE%\AzureData\CSEResult.log does not exist.'; }; $result=(Get-Content %SYSTEMDRIVE%\AzureData\CSEResult.log); if ($result -ne '0') { throw \"$result\"; };`)
+\" >> %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log 2>&1;`)
 
 func windowsCsecmdPs1Bytes() ([]byte, error) {
 	return _windowsCsecmdPs1, nil
@@ -8064,19 +8064,15 @@ finally
     $ExecutionDuration=$(New-Timespan -Start $StartTime -End $(Get-Date))
     Write-Log "CSE ExecutionDuration: $ExecutionDuration"
 
-    # Windows CSE does not return any error message so we cannot generate below content as the response
-    # $JsonString = "ExitCode: `+"`"+`"{0}`+"`"+`", Output: `+"`"+`"{1}`+"`"+`", Error: `+"`"+`"{2}`+"`"+`", ExecDuration: `+"`"+`"{3}`+"`"+`"" -f $global:ExitCode, "", $global:ErrorMessage, $ExecutionDuration.TotalSeconds
-    Write-Log "Generate CSE result to $CSEResultFilePath : $global:ExitCode "
-    if ($global:ExitCode -ne 0) {
-        echo "AKS Windows CSE ExitCode: $global:ExitCode ($($global:ErrorCodeNames[$global:ExitCode])), ErrorMessage: $global:ErrorMessage" | Out-File -FilePath $CSEResultFilePath -Encoding utf8
-    } else {
-        echo 0 | Out-File -FilePath $CSEResultFilePath -Encoding utf8
-    }
-
     # Flush stdout to C:\AzureData\CustomDataSetupScript.log
     [Console]::Out.Flush()
 
     Upload-GuestVMLogs -ExitCode $global:ExitCode
+
+    # $JsonString = "ExitCode: `+"`"+`"{0}`+"`"+`", Output: `+"`"+`"{1}`+"`"+`", Error: `+"`"+`"{2}`+"`"+`", ExecDuration: `+"`"+`"{3}`+"`"+`"" -f $global:ExitCode, "", $global:ErrorMessage, $ExecutionDuration.TotalSeconds
+    if ($global:ExitCode -ne 0) {
+        throw "ExitCode: `+"`"+`"$global:ExitCode`+"`"+`", Output: `+"`"+`"$($global:ErrorCodeNames[$global:ExitCode])`+"`"+`", Error: `+"`"+`"$global:ErrorMessage`+"`"+`", ExecDuration: `+"`"+`"$ExecutionDuration`+"`"+`""
+    }
 }
 `)
 
