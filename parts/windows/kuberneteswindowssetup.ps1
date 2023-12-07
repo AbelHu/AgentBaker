@@ -282,7 +282,7 @@ try
     Write-KubeClusterConfig -MasterIP $MasterIP -KubeDnsServiceIp $KubeDnsServiceIp
 
     Write-Log "Download kubelet binaries and unzip"
-    Get-KubePackage -KubeBinariesSASURL $global:KubeBinariesPackageSASURL
+    Get-KubePackage -KubeBinariesSASURL 'fakeurl'
 
     # This overwrites the binaries that are downloaded from the custom packge with binaries.
     # The custom package has a few files that are necessary for future steps (nssm.exe)
