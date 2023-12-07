@@ -7544,10 +7544,10 @@ $arguments = '
 -CSEResultFilePath %SYSTEMDRIVE%\AzureData\CSEResult.log';
 $inputFile = '%SYSTEMDRIVE%\AzureData\CustomData.bin';
 $outputFile = '%SYSTEMDRIVE%\AzureData\CustomDataSetupScript.ps1';
-if (!(Test-Path $inputFile)) { echo 49 | Out-File -FilePath '%SYSTEMDRIVE%\AzureData\CSEResult.log' -Encoding utf8; exit; };
+if (!(Test-Path $inputFile)) { echo 'AKS Windows CSE ExitCode: 49 (WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN), ErrorMessage: %SYSTEMDRIVE%\AzureData\CustomData.bin does not exist.' | Out-File -FilePath '%SYSTEMDRIVE%\AzureData\CSEResult.log' -Encoding utf8; exit; };
 Copy-Item $inputFile $outputFile;
 Invoke-Expression('{0} {1}' -f $outputFile, $arguments);
-\" >> %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log 2>&1; if (!(Test-Path %SYSTEMDRIVE%\AzureData\CSEResult.log)) { exit 50; }; $code=(Get-Content %SYSTEMDRIVE%\AzureData\CSEResult.log); exit $code`)
+\" >> %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log 2>&1; if (!(Test-Path %SYSTEMDRIVE%\AzureData\CSEResult.log)) { throw 'AKS Windows CSE ExitCode: 50 (WINDOWS_CSE_ERROR_NO_CSE_RESULT_LOG), ErrorMessage: %SYSTEMDRIVE%\AzureData\CSEResult.log does not exist.'; }; $result=(Get-Content %SYSTEMDRIVE%\AzureData\CSEResult.log); if ($result -ne '0') { throw \"$result\"; };`)
 
 func windowsCsecmdPs1Bytes() ([]byte, error) {
 	return _windowsCsecmdPs1, nil
@@ -8066,8 +8066,12 @@ finally
 
     # Windows CSE does not return any error message so we cannot generate below content as the response
     # $JsonString = "ExitCode: `+"`"+`"{0}`+"`"+`", Output: `+"`"+`"{1}`+"`"+`", Error: `+"`"+`"{2}`+"`"+`", ExecDuration: `+"`"+`"{3}`+"`"+`"" -f $global:ExitCode, "", $global:ErrorMessage, $ExecutionDuration.TotalSeconds
-    Write-Log "Generate CSE result to $CSEResultFilePath : $global:ExitCode"
-    echo $global:ExitCode | Out-File -FilePath $CSEResultFilePath -Encoding utf8
+    Write-Log "Generate CSE result to $CSEResultFilePath : $global:ExitCode "
+    if ($global:ExitCode -ne 0) {
+        echo "AKS Windows CSE ExitCode: $global:ExitCode ($($global:ErrorCodeNames[$global:ExitCode])), ErrorMessage: $global:ErrorMessage" | Out-File -FilePath $CSEResultFilePath -Encoding utf8
+    } else {
+        echo 0 | Out-File -FilePath $CSEResultFilePath -Encoding utf8
+    }
 
     # Flush stdout to C:\AzureData\CustomDataSetupScript.log
     [Console]::Out.Flush()
@@ -8204,6 +8208,80 @@ $global:WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN=49 # Return this error code in csec
 $global:WINDOWS_CSE_ERROR_NO_CSE_RESULT_LOG=50 # Return this error code in csecmd.ps1 when C:\AzureData\CSEResult.log does not exist
 $global:WINDOWS_CSE_ERROR_COPY_LOG_COLLECTION_SCRIPTS=51
 $global:WINDOWS_CSE_ERROR_RESIZE_OS_DRIVE=52
+$global:WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_FAILED=53
+$global:WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_TIMEOUT=54
+$global:WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_VM_SIZE_NOT_SUPPORTED=55
+$global:WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_URL_NOT_SET=56
+$global:WINDOWS_CSE_ERROR_GPU_SKU_INFO_NOT_FOUND=57
+$global:WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_DOWNLOAD_FAILURE=58
+$global:WINDOWS_CSE_ERROR_GPU_DRIVER_INVALID_SIGNATURE=59
+$global:WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_EXCEPTION=60
+$global:WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_URL_NOT_EXE=61
+
+$global:ErrorCodeNames = @(
+    "",
+    "WINDOWS_CSE_ERROR_UNKNOWN",
+    "WINDOWS_CSE_ERROR_DOWNLOAD_FILE_WITH_RETRY",
+    "WINDOWS_CSE_ERROR_INVOKE_EXECUTABLE",
+    "WINDOWS_CSE_ERROR_FILE_NOT_EXIST",
+    "WINDOWS_CSE_ERROR_CHECK_API_SERVER_CONNECTIVITY",
+    "WINDOWS_CSE_ERROR_PAUSE_IMAGE_NOT_EXIST",
+    "WINDOWS_CSE_ERROR_GET_SUBNET_PREFIX",
+    "WINDOWS_CSE_ERROR_GENERATE_TOKEN_FOR_ARM",
+    "WINDOWS_CSE_ERROR_NETWORK_INTERFACES_NOT_EXIST",
+    "WINDOWS_CSE_ERROR_NETWORK_ADAPTER_NOT_EXIST",
+    "WINDOWS_CSE_ERROR_MANAGEMENT_IP_NOT_EXIST",
+    "WINDOWS_CSE_ERROR_CALICO_SERVICE_ACCOUNT_NOT_EXIST",
+    "WINDOWS_CSE_ERROR_CONTAINERD_NOT_INSTALLED",
+    "WINDOWS_CSE_ERROR_CONTAINERD_NOT_RUNNING",
+    "WINDOWS_CSE_ERROR_OPENSSH_NOT_INSTALLED",
+    "WINDOWS_CSE_ERROR_OPENSSH_FIREWALL_NOT_CONFIGURED",
+    "WINDOWS_CSE_ERROR_INVALID_PARAMETER_IN_AZURE_CONFIG",
+    "WINDOWS_CSE_ERROR_NO_DOCKER_TO_BUILD_PAUSE_CONTAINER",
+    "WINDOWS_CSE_ERROR_GET_CA_CERTIFICATES",
+    "WINDOWS_CSE_ERROR_DOWNLOAD_CA_CERTIFICATES",
+    "WINDOWS_CSE_ERROR_EMPTY_CA_CERTIFICATES",
+    "WINDOWS_CSE_ERROR_ENABLE_SECURE_TLS",
+    "WINDOWS_CSE_ERROR_GMSA_EXPAND_ARCHIVE",
+    "WINDOWS_CSE_ERROR_GMSA_ENABLE_POWERSHELL_PRIVILEGE",
+    "WINDOWS_CSE_ERROR_GMSA_SET_REGISTRY_PERMISSION",
+    "WINDOWS_CSE_ERROR_GMSA_SET_REGISTRY_VALUES",
+    "WINDOWS_CSE_ERROR_GMSA_IMPORT_CCGEVENTS",
+    "WINDOWS_CSE_ERROR_GMSA_IMPORT_CCGAKVPPLUGINEVENTS",
+    "WINDOWS_CSE_ERROR_NOT_FOUND_MANAGEMENT_IP",
+    "WINDOWS_CSE_ERROR_NOT_FOUND_BUILD_NUMBER",
+    "WINDOWS_CSE_ERROR_NOT_FOUND_PROVISIONING_SCRIPTS",
+    "WINDOWS_CSE_ERROR_START_NODE_RESET_SCRIPT_TASK",
+    "WINDOWS_CSE_ERROR_DOWNLOAD_CSE_PACKAGE",
+    "WINDOWS_CSE_ERROR_DOWNLOAD_KUBERNETES_PACKAGE",
+    "WINDOWS_CSE_ERROR_DOWNLOAD_CNI_PACKAGE",
+    "WINDOWS_CSE_ERROR_DOWNLOAD_HNS_MODULE",
+    "WINDOWS_CSE_ERROR_DOWNLOAD_CALICO_PACKAGE",
+    "WINDOWS_CSE_ERROR_DOWNLOAD_GMSA_PACKAGE",
+    "WINDOWS_CSE_ERROR_DOWNLOAD_CSI_PROXY_PACKAGE",
+    "WINDOWS_CSE_ERROR_DOWNLOAD_CONTAINERD_PACKAGE",
+    "WINDOWS_CSE_ERROR_SET_TCP_DYNAMIC_PORT_RANGE",
+    "WINDOWS_CSE_ERROR_BUILD_DOCKER_PAUSE_CONTAINER",
+    "WINDOWS_CSE_ERROR_PULL_PAUSE_IMAGE",
+    "WINDOWS_CSE_ERROR_BUILD_TAG_PAUSE_IMAGE",
+    "WINDOWS_CSE_ERROR_CONTAINERD_BINARY_EXIST",
+    "WINDOWS_CSE_ERROR_SET_TCP_EXCLUDE_PORT_RANGE",
+    "WINDOWS_CSE_ERROR_SET_UDP_DYNAMIC_PORT_RANGE",
+    "WINDOWS_CSE_ERROR_SET_UDP_EXCLUDE_PORT_RANGE",
+    "WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN",
+    "WINDOWS_CSE_ERROR_NO_CSE_RESULT_LOG",
+    "WINDOWS_CSE_ERROR_COPY_LOG_COLLECTION_SCRIPTS",
+    "WINDOWS_CSE_ERROR_RESIZE_OS_DRIVE",
+    "WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_FAILED",
+    "WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_TIMEOUT",
+    "WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_VM_SIZE_NOT_SUPPORTED",
+    "WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_URL_NOT_SET",
+    "WINDOWS_CSE_ERROR_GPU_SKU_INFO_NOT_FOUND",
+    "WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_DOWNLOAD_FAILURE",
+    "WINDOWS_CSE_ERROR_GPU_DRIVER_INVALID_SIGNATURE",
+    "WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_EXCEPTION",
+    "WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_URL_NOT_EXE"
+)
 
 # NOTE: KubernetesVersion does not contain "v"
 $global:MinimalKubernetesVersionWithLatestContainerd = "1.28.0" # Will change it to the correct version when we support new Windows containerd version
@@ -8289,7 +8367,7 @@ function Set-ExitCode
     )
     Write-Log "Set ExitCode to $ExitCode and exit. Error: $ErrorMessage"
     $global:ExitCode=$ExitCode
-    $global:ErrorMessage=$ErrorMessage
+    $global:ErrorMessage=($ErrorMessage -replace '\r*\n', '')
     exit $ExitCode
 }
 
