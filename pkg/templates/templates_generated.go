@@ -7547,7 +7547,7 @@ $outputFile = '%SYSTEMDRIVE%\AzureData\CustomDataSetupScript.ps1';
 if (!(Test-Path $inputFile)) { throw 'ExitCode: `+"`"+`"49`+"`"+`", Output: `+"`"+`"WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN`+"`"+`", Error: `+"`"+`"%SYSTEMDRIVE%\AzureData\CustomData.bin does not exist.`+"`"+`"'; };
 Copy-Item $inputFile $outputFile;
 Invoke-Expression('{0} {1}' -f $outputFile, $arguments);
-\" >> %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log 2>&1;`)
+\" >> %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log`)
 
 func windowsCsecmdPs1Bytes() ([]byte, error) {
 	return _windowsCsecmdPs1, nil
