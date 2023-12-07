@@ -500,8 +500,12 @@ finally
 
     # Windows CSE does not return any error message so we cannot generate below content as the response
     # $JsonString = "ExitCode: `"{0}`", Output: `"{1}`", Error: `"{2}`", ExecDuration: `"{3}`"" -f $global:ExitCode, "", $global:ErrorMessage, $ExecutionDuration.TotalSeconds
-    Write-Log "Generate CSE result to $CSEResultFilePath : $global:ExitCode"
-    echo $global:ExitCode | Out-File -FilePath $CSEResultFilePath -Encoding utf8
+    Write-Log "Generate CSE result to $CSEResultFilePath : $global:ExitCode "
+    if ($global:ExitCode -ne 0) {
+        echo "AKS Windows CSE ExitCode: $global:ExitCode ($($global:ErrorCodeNames[$global:ExitCode])), ErrorMessage: $global:ErrorMessage" | Out-File -FilePath $CSEResultFilePath -Encoding utf8
+    } else {
+        echo 0 | Out-File -FilePath $CSEResultFilePath -Encoding utf8
+    }
 
     # Flush stdout to C:\AzureData\CustomDataSetupScript.log
     [Console]::Out.Flush()
