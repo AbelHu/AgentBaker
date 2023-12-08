@@ -495,6 +495,10 @@ finally
 
     # $JsonString = "ExitCode: `"{0}`", Output: `"{1}`", Error: `"{2}`", ExecDuration: `"{3}`"" -f $global:ExitCode, "", $global:ErrorMessage, $ExecutionDuration.TotalSeconds
     if ($global:ExitCode -ne 0) {
-        throw "ExitCode: `"$global:ExitCode`", Output: `"$($global:ErrorCodeNames[$global:ExitCode])`", Error: `"$global:ErrorMessage`", ExecDuration: `"$ExecutionDuration`""
+        Write-Error "ExitCode: `"$global:ExitCode`", Output: `"$($global:ErrorCodeNames[$global:ExitCode])`", Error: `"$global:ErrorMessage`", ExecDuration: `"$ExecutionDuration`""
+        exit $global:ExitCode
+    } else {
+        Write-Error 'This is a test. It succeeded.'
+        exit 0
     }
 }
