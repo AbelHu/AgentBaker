@@ -2,6 +2,7 @@
 # It is better to define functions in the scripts under staging/cse/windows.
 
 # Define all exit codes in Windows CSE
+$global:WINDOWS_CSE_SUCCESS=0
 $global:WINDOWS_CSE_ERROR_UNKNOWN=1 # For unexpected error caught by the catch block in kuberneteswindowssetup.ps1
 $global:WINDOWS_CSE_ERROR_DOWNLOAD_FILE_WITH_RETRY=2
 $global:WINDOWS_CSE_ERROR_INVOKE_EXECUTABLE=3
@@ -65,7 +66,7 @@ $global:WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_EXCEPTION=60
 $global:WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_URL_NOT_EXE=61
 
 $global:ErrorCodeNames = @(
-    "",
+    "WINDOWS_CSE_SUCCESS",
     "WINDOWS_CSE_ERROR_UNKNOWN",
     "WINDOWS_CSE_ERROR_DOWNLOAD_FILE_WITH_RETRY",
     "WINDOWS_CSE_ERROR_INVOKE_EXECUTABLE",
