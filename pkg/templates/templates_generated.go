@@ -7544,10 +7544,10 @@ $arguments = '
 -CSEResultFilePath %SYSTEMDRIVE%\AzureData\CSEResult.log';
 $inputFile = '%SYSTEMDRIVE%\AzureData\CustomData.bin';
 $outputFile = '%SYSTEMDRIVE%\AzureData\CustomDataSetupScript.ps1';
-if (!(Test-Path $inputFile)) { echo 'AKS Windows CSE ExitCode: 49 (WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN), ErrorMessage: %SYSTEMDRIVE%\AzureData\CustomData.bin does not exist.' | Out-File -FilePath '%SYSTEMDRIVE%\AzureData\CSEResult.log' -Encoding utf8; exit; };
+if (!(Test-Path $inputFile)) { echo 'ExitCode: \"49\", Output: \"WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN\", Error: \"%SYSTEMDRIVE%\AzureData\CustomData.bin does not exist.\", ExecDuration: \"0\"' | Out-File -FilePath '%SYSTEMDRIVE%\AzureData\CSEResult.log' -Encoding utf8; exit; };
 Copy-Item $inputFile $outputFile;
 Invoke-Expression('{0} {1}' -f $outputFile, $arguments);
-\" >> %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log 2>&1; if (!(Test-Path %SYSTEMDRIVE%\AzureData\CSEResult.log)) { throw 'AKS Windows CSE ExitCode: 50 (WINDOWS_CSE_ERROR_NO_CSE_RESULT_LOG), ErrorMessage: %SYSTEMDRIVE%\AzureData\CSEResult.log does not exist.'; }; $result=(Get-Content %SYSTEMDRIVE%\AzureData\CSEResult.log); if ($result -ne '0') { throw \"$result\"; };`)
+\" >> %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log 2>&1; if (!(Test-Path %SYSTEMDRIVE%\AzureData\CSEResult.log)) { echo 'ExitCode: \"50\", Output: \"WINDOWS_CSE_ERROR_NO_CSE_RESULT_LOG\", Error: \"%SYSTEMDRIVE%\AzureData\CSEResult.log does not exist.\", ExecDuration: \"0\"' | Out-File -FilePath '%SYSTEMDRIVE%\AzureData\CSEResult.log' -Encoding utf8; }; $result=(Get-Content %SYSTEMDRIVE%\AzureData\CSEResult.log); $match=(Select-String 'ExitCode: "(\d+)"' -inputobject $result); if ($match) { Write-Error \"$result\"; exit $match.matches.groups[1].value }; throw $result`)
 
 func windowsCsecmdPs1Bytes() ([]byte, error) {
 	return _windowsCsecmdPs1, nil
@@ -8064,14 +8064,9 @@ finally
     $ExecutionDuration=$(New-Timespan -Start $StartTime -End $(Get-Date))
     Write-Log "CSE ExecutionDuration: $ExecutionDuration"
 
-    # Windows CSE does not return any error message so we cannot generate below content as the response
-    # $JsonString = "ExitCode: `+"`"+`"{0}`+"`"+`", Output: `+"`"+`"{1}`+"`"+`", Error: `+"`"+`"{2}`+"`"+`", ExecDuration: `+"`"+`"{3}`+"`"+`"" -f $global:ExitCode, "", $global:ErrorMessage, $ExecutionDuration.TotalSeconds
+    # $JsonString = "ExitCode: `+"`"+`"{0}`+"`"+`", Output: `+"`"+`"{1}`+"`"+`", Error: `+"`"+`"{2}`+"`"+`", ExecDuration: `+"`"+`"{3}`+"`"+`""
     Write-Log "Generate CSE result to $CSEResultFilePath : $global:ExitCode "
-    if ($global:ExitCode -ne 0) {
-        echo "AKS Windows CSE ExitCode: $global:ExitCode ($($global:ErrorCodeNames[$global:ExitCode])), ErrorMessage: $global:ErrorMessage" | Out-File -FilePath $CSEResultFilePath -Encoding utf8
-    } else {
-        echo 0 | Out-File -FilePath $CSEResultFilePath -Encoding utf8
-    }
+    echo "ExitCode: `+"`"+`"$global:ExitCode`+"`"+`", Output: `+"`"+`"$($global:ErrorCodeNames[$global:ExitCode])`+"`"+`", Error: `+"`"+`"$global:ErrorMessage`+"`"+`", ExecDuration: `+"`"+`"$ExecutionDuration`+"`"+`"" | Out-File -FilePath $CSEResultFilePath -Encoding utf8
 
     # Flush stdout to C:\AzureData\CustomDataSetupScript.log
     [Console]::Out.Flush()
@@ -8156,6 +8151,7 @@ var _windowsWindowscsehelperPs1 = []byte(`# This script is used to define basic 
 # It is better to define functions in the scripts under staging/cse/windows.
 
 # Define all exit codes in Windows CSE
+$global:WINDOWS_CSE_SUCCESS=0
 $global:WINDOWS_CSE_ERROR_UNKNOWN=1 # For unexpected error caught by the catch block in kuberneteswindowssetup.ps1
 $global:WINDOWS_CSE_ERROR_DOWNLOAD_FILE_WITH_RETRY=2
 $global:WINDOWS_CSE_ERROR_INVOKE_EXECUTABLE=3
@@ -8219,7 +8215,7 @@ $global:WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_EXCEPTION=60
 $global:WINDOWS_CSE_ERROR_GPU_DRIVER_INSTALLATION_URL_NOT_EXE=61
 
 $global:ErrorCodeNames = @(
-    "",
+    "WINDOWS_CSE_SUCCESS",
     "WINDOWS_CSE_ERROR_UNKNOWN",
     "WINDOWS_CSE_ERROR_DOWNLOAD_FILE_WITH_RETRY",
     "WINDOWS_CSE_ERROR_INVOKE_EXECUTABLE",
