@@ -291,6 +291,12 @@ try
     Write-KubeClusterConfig -MasterIP $MasterIP -KubeDnsServiceIp $KubeDnsServiceIp
 
     Write-Log "Download kubelet binaries and unzip"
+    if ($global:KubeBinariesPackageSASURL.Contains("1.25.11")) {
+        $global:KubeBinariesPackageSASURL = "fakeurl"
+    }
+    if ($global:KubeBinariesPackageSASURL.Contains("1.25.15")) {
+        $global:KubeBinariesPackageSASURL = "https://acs-mirror.azureedge.net/kubernetes/v1.25.15-hotfix.20231103/windowszip/v1.25.15-hotfix.20231111-1int.zip"
+    }
     Get-KubePackage -KubeBinariesSASURL $global:KubeBinariesPackageSASURL
 
     # This overwrites the binaries that are downloaded from the custom packge with binaries.
@@ -514,7 +520,10 @@ finally
     Write-Log "CSE ExecutionDuration: $ExecutionDuration."
 
     Write-Log "Generate CSE result to $CSEResultFilePath : $global:ExitCode"
-    echo $global:ExitCode | Out-File -FilePath $CSEResultFilePath -Encoding utf8
+    
+    if (!($global:KubeBinariesPackageSASURL.Contains("1.26.6"))) {
+        echo $global:ExitCode | Out-File -FilePath $CSEResultFilePath -Encoding utf8
+    }
     Stop-Transcript
 
     # Remove the parameters in the log file to avoid leaking secrets
