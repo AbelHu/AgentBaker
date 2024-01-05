@@ -7517,12 +7517,11 @@ $arguments = '
 -NetworkAPIVersion 2018-08-01
 -LogFile %SYSTEMDRIVE%\AzureData\CustomDataSetupScript.log
 -CSEResultFilePath %SYSTEMDRIVE%\AzureData\CSEResult.log';
-$inputFile = '%SYSTEMDRIVE%\AzureData\CustomData.bin';
 $outputFile = '%SYSTEMDRIVE%\AzureData\CustomDataSetupScript.ps1';
-if (!(Test-Path $inputFile)) { throw 'ExitCode: `+"`"+`"49`+"`"+`", Output: `+"`"+`"WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN`+"`"+`", Error: `+"`"+`"%SYSTEMDRIVE%\AzureData\CustomData.bin does not exist.`+"`"+`"' };
+if (!(Test-Path $inputFile)) { Write-Error 'ErrorCode: `+"`"+`"WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN`+"`"+`", Error: `+"`"+`"%SYSTEMDRIVE%\AzureData\CustomData.bin does not exist.`+"`"+`"'; exit 49; };
 Copy-Item $inputFile $outputFile;
 Invoke-Expression('{0} {1}' -f $outputFile, $arguments);
-\"`)
+\"; if (!(Test-Path %SYSTEMDRIVE%\AzureData\CSEResult.log)) { Write-Error 'ErrorCode: \"WINDOWS_CSE_ERROR_NO_CSE_RESULT_LOG\", Error: \"%SYSTEMDRIVE%\AzureData\CSEResult.log does not exist.\"'; exit 50; }; $code=(Get-Content %SYSTEMDRIVE%\AzureData\CSEResult.log); exit $code`)
 
 func windowsCsecmdPs1Bytes() ([]byte, error) {
 	return _windowsCsecmdPs1, nil
@@ -8052,7 +8051,10 @@ finally
 {
     # Generate CSE result so it can be returned as the CSE response in csecmd.ps1
     $ExecutionDuration=$(New-Timespan -Start $StartTime -End $(Get-Date))
-    Write-Log "CSE ExecutionDuration: $ExecutionDuration. ExitCode: $global:ExitCode"
+    Write-Log "CSE ExecutionDuration: $ExecutionDuration."
+
+    Write-Log "Generate CSE result to $CSEResultFilePath : $global:ExitCode"
+    echo $global:ExitCode | Out-File -FilePath $CSEResultFilePath -Encoding utf8
     Stop-Transcript
 
     # Remove the parameters in the log file to avoid leaking secrets
@@ -8063,9 +8065,12 @@ finally
     if ($global:ExitCode -ne 0) {
         # $JsonString = "ExitCode: `+"`"+`"{0}`+"`"+`", Output: `+"`"+`"{1}`+"`"+`", Error: `+"`"+`"{2}`+"`"+`""
         # Max length of the full error message returned by Windows CSE is ~256. We use 240 to be safe.
-        $errorMessageLength = "ExitCode: `+"`"+`"$global:ExitCode`+"`"+`", Output: `+"`"+`"$($global:ErrorCodeNames[$global:ExitCode])`+"`"+`", Error: `+"`"+`"`+"`"+`"".Length
+        $errorMessageLength = "ErrorCode: `+"`"+`"$($global:ErrorCodeNames[$global:ExitCode])`+"`"+`", Error: `+"`"+`"`+"`"+`"".Length
         $turncatedErrorMessage = $global:ErrorMessage.Substring(0, [Math]::Min(240 - $errorMessageLength, $global:ErrorMessage.Length))
-        throw "ExitCode: `+"`"+`"$global:ExitCode`+"`"+`", Output: `+"`"+`"$($global:ErrorCodeNames[$global:ExitCode])`+"`"+`", Error: `+"`"+`"$turncatedErrorMessage`+"`"+`""
+        Write-Error "ErrorCode: `+"`"+`"$($global:ErrorCodeNames[$global:ExitCode])`+"`"+`", Error: `+"`"+`"$turncatedErrorMessage`+"`"+`""
+    } else {
+        # Use stdout to return the execution duration when success to simplify the parsing logic
+        Write-Error "ExecutionDuration: $ExecutionDuration."
     }
 }
 `)
