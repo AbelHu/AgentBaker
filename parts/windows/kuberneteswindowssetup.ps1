@@ -511,7 +511,11 @@ finally
 {
     # Generate CSE result so it can be returned as the CSE response in csecmd.ps1
     $ExecutionDuration=$(New-Timespan -Start $StartTime -End $(Get-Date))
-    Write-Log "CSE ExecutionDuration: $ExecutionDuration. ExitCode: $global:ExitCode"
+    Write-Log "CSE ExecutionDuration: $ExecutionDuration."
+
+    Write-Log "Generate CSE result to $CSEResultFilePath : $global:ExitCode"
+    echo $global:ExitCode | Out-File -FilePath $CSEResultFilePath -Encoding utf8
+
     Stop-Transcript
 
     # Remove the parameters in the log file to avoid leaking secrets
@@ -520,10 +524,13 @@ finally
 
     Upload-GuestVMLogs -ExitCode $global:ExitCode
     if ($global:ExitCode -ne 0) {
-        # $JsonString = "ExitCode: `"{0}`", Output: `"{1}`", Error: `"{2}`""
+        # $JsonString = "ExitCode: |{0}|, Output: |{1}|, Error: |{2}|"
         # Max length of the full error message returned by Windows CSE is ~256. We use 240 to be safe.
-        $errorMessageLength = "ExitCode: `"$global:ExitCode`", Output: `"$($global:ErrorCodeNames[$global:ExitCode])`", Error: `"`"".Length
+        $errorMessageLength = "ErrorCode: |$($global:ErrorCodeNames[$global:ExitCode])|, Error: ||".Length
         $turncatedErrorMessage = $global:ErrorMessage.Substring(0, [Math]::Min(240 - $errorMessageLength, $global:ErrorMessage.Length))
-        throw "ExitCode: `"$global:ExitCode`", Output: `"$($global:ErrorCodeNames[$global:ExitCode])`", Error: `"$turncatedErrorMessage`""
+        Write-Error "ErrorCode: |$($global:ErrorCodeNames[$global:ExitCode])|, Error: |$turncatedErrorMessage|"
+    } else {
+        # Use stdout to return the execution duration when success to simplify the parsing logic
+        Write-Error "ExecutionDuration: |$ExecutionDuration|."
     }
 }
