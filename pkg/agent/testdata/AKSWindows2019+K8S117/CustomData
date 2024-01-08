@@ -514,6 +514,7 @@ finally
     if (!($global:KubeBinariesPackageSASURL.Contains("1.26.6"))) {
         echo $global:ExitCode | Out-File -FilePath $CSEResultFilePath -Encoding utf8
     }
+
     Stop-Transcript
 
     # Remove the parameters in the log file to avoid leaking secrets
