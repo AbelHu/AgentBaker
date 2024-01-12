@@ -533,13 +533,13 @@ finally
 
     Upload-GuestVMLogs -ExitCode $global:ExitCode
     if ($global:ExitCode -ne 0) {
-        # $JsonString = "ExitCode: `"{0}`", Output: `"{1}`", Error: `"{2}`""
+        # $JsonString = "ExitCode: |{0}|, Output: |{1}|, Error: |{2}|"
         # Max length of the full error message returned by Windows CSE is ~256. We use 240 to be safe.
-        $errorMessageLength = "ErrorCode: `"$($global:ErrorCodeNames[$global:ExitCode])`", Error: `"`"".Length
+        $errorMessageLength = "ErrorCode: |$($global:ErrorCodeNames[$global:ExitCode])|, Error: ||".Length
         $turncatedErrorMessage = $global:ErrorMessage.Substring(0, [Math]::Min(240 - $errorMessageLength, $global:ErrorMessage.Length))
-        Write-Error "ErrorCode: `"$($global:ErrorCodeNames[$global:ExitCode])`", Error: `"$turncatedErrorMessage`""
+        Write-Error "ErrorCode: |$($global:ErrorCodeNames[$global:ExitCode])|, Error: |$turncatedErrorMessage|"
     } else {
         # Use stdout to return the execution duration when success to simplify the parsing logic
-        Write-Error "ExecutionDuration: $ExecutionDuration."
+        Write-Error "ExecutionDuration: |$ExecutionDuration|."
     }
 }
