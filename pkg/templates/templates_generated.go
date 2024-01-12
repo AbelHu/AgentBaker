@@ -7519,7 +7519,7 @@ $arguments = '
 -CSEResultFilePath %SYSTEMDRIVE%\AzureData\CSEResult.log';
 $inputFile = '%SYSTEMDRIVE%\AzureData\CustomData.bin';
 $outputFile = '%SYSTEMDRIVE%\AzureData\CustomDataSetupScript.ps1';
-if (!(Test-Path $inputFile)) { throw 'ExitCode: "49", Output: "WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN", Error: "C:\AzureData\CustomData.bin does not nexist."' };
+if (!(Test-Path $inputFile)) { throw 'ExitCode: |49|, Output: |WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN|, Error: |C:\AzureData\CustomData.bin does not exist.|' };
 Copy-Item $inputFile $outputFile;
 Invoke-Expression('{0} {1}' -f $outputFile, $arguments);
 \"`)
@@ -8067,11 +8067,11 @@ finally
 
     Upload-GuestVMLogs -ExitCode $global:ExitCode
     if ($global:ExitCode -ne 0) {
-        # $JsonString = "ExitCode: `+"`"+`"{0}`+"`"+`", Output: `+"`"+`"{1}`+"`"+`", Error: `+"`"+`"{2}`+"`"+`""
+        # $JsonString = "ExitCode: |{0}|, Output: |{1}|, Error: |{2}|"
         # Max length of the full error message returned by Windows CSE is ~256. We use 240 to be safe.
-        $errorMessageLength = "ExitCode: `+"`"+`"$global:ExitCode`+"`"+`", Output: `+"`"+`"$($global:ErrorCodeNames[$global:ExitCode])`+"`"+`", Error: `+"`"+`"`+"`"+`"".Length
+        $errorMessageLength = "ExitCode: |$global:ExitCode|, Output: |$($global:ErrorCodeNames[$global:ExitCode])|, Error: ||".Length
         $turncatedErrorMessage = $global:ErrorMessage.Substring(0, [Math]::Min(240 - $errorMessageLength, $global:ErrorMessage.Length))
-        throw "ExitCode: `+"`"+`"$global:ExitCode`+"`"+`", Output: `+"`"+`"$($global:ErrorCodeNames[$global:ExitCode])`+"`"+`", Error: `+"`"+`"$turncatedErrorMessage`+"`"+`""
+        throw "ExitCode: |$global:ExitCode|, Output: |$($global:ErrorCodeNames[$global:ExitCode])|, Error: |$turncatedErrorMessage|"
     }
 }
 `)
