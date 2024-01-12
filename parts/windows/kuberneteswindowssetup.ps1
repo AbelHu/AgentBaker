@@ -10,7 +10,6 @@
         Notes on modifying this file:
         - This file extension is PS1, but it is actually used as a template from pkg/engine/template_generator.go
         - All of the lines that have braces in them will be modified. Please do not change them here, change them in the Go sources
-        - Single quotes are forbidden, they are reserved to delineate the different members for the ARM template concat() call
         - windowscsehelper.ps1 contains basic util functions. It will be compressed to a zip file and then be converted to base64 encoding
           string and stored in $zippedFiles. Reason: This script is a template and has some limitations.
         - All other scripts will be packaged and published in a single package. It will be downloaded in provisioning VM.
@@ -532,13 +531,13 @@ finally
 
     Upload-GuestVMLogs -ExitCode $global:ExitCode
     if ($global:ExitCode -ne 0) {
-        # $JsonString = "ExitCode: |{0}|, Output: |{1}|, Error: |{2}|"
+        # $JsonString = "ErrorCode: ''{0}'', Error: ''{2}''"
         # Max length of the full error message returned by Windows CSE is ~256. We use 240 to be safe.
-        $errorMessageLength = "ErrorCode: |$($global:ErrorCodeNames[$global:ExitCode])|, Error: ||".Length
+        $errorMessageLength = "ErrorCode: ''$($global:ErrorCodeNames[$global:ExitCode])'', Error: ''''".Length
         $turncatedErrorMessage = $global:ErrorMessage.Substring(0, [Math]::Min(240 - $errorMessageLength, $global:ErrorMessage.Length))
-        Write-Error "ErrorCode: |$($global:ErrorCodeNames[$global:ExitCode])|, Error: |$turncatedErrorMessage|"
+        Write-Error "ErrorCode: ''$($global:ErrorCodeNames[$global:ExitCode])'', Error: ''$turncatedErrorMessage''"
     } else {
         # Use stdout to return the execution duration when success to simplify the parsing logic
-        Write-Error "ExecutionDuration: |$ExecutionDuration|."
+        Write-Error "ExecutionDuration: $ExecutionDuration."
     }
 }
