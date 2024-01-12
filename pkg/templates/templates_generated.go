@@ -7519,10 +7519,10 @@ $arguments = '
 -CSEResultFilePath %SYSTEMDRIVE%\AzureData\CSEResult.log';
 $inputFile = '%SYSTEMDRIVE%\AzureData\CustomData.bin';
 $outputFile = '%SYSTEMDRIVE%\AzureData\CustomDataSetupScript.ps1';
-if (!(Test-Path $inputFile)) { Write-Error 'ErrorCode: """WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN""""""", Error: """""""C:\AzureData\CustomData.bin does not exist."""""""'; exit 49; };
+if (!(Test-Path $inputFile)) { Write-Error 'ErrorCode: |WINDOWS_CSE_ERROR_NO_CUSTOM_DATA_BIN|, Error: |C:\AzureData\CustomData.bin does not exist.|'; exit 49; };
 Copy-Item $inputFile $outputFile;
 Invoke-Expression('{0} {1}' -f $outputFile, $arguments);
-\"; if (!(Test-Path %SYSTEMDRIVE%\AzureData\CSEResult.log)) { Write-Error 'ErrorCode: \"WINDOWS_CSE_ERROR_NO_CSE_RESULT_LOG\", Error: \"%SYSTEMDRIVE%\AzureData\CSEResult.log does not exist.\"'; exit 50; }; $code=(Get-Content %SYSTEMDRIVE%\AzureData\CSEResult.log); exit $code`)
+\"; if (!(Test-Path %SYSTEMDRIVE%\AzureData\CSEResult.log)) { Write-Error 'ErrorCode: |WINDOWS_CSE_ERROR_NO_CSE_RESULT_LOG|, Error: |%SYSTEMDRIVE%\AzureData\CSEResult.log does not exist.|'; exit 50; }; $code=(Get-Content %SYSTEMDRIVE%\AzureData\CSEResult.log); exit $code`)
 
 func windowsCsecmdPs1Bytes() ([]byte, error) {
 	return _windowsCsecmdPs1, nil
@@ -8074,14 +8074,14 @@ finally
 
     Upload-GuestVMLogs -ExitCode $global:ExitCode
     if ($global:ExitCode -ne 0) {
-        # $JsonString = "ExitCode: `+"`"+`"{0}`+"`"+`", Output: `+"`"+`"{1}`+"`"+`", Error: `+"`"+`"{2}`+"`"+`""
+        # $JsonString = "ExitCode: |{0}|, Output: |{1}|, Error: |{2}|"
         # Max length of the full error message returned by Windows CSE is ~256. We use 240 to be safe.
-        $errorMessageLength = "ErrorCode: `+"`"+`"$($global:ErrorCodeNames[$global:ExitCode])`+"`"+`", Error: `+"`"+`"`+"`"+`"".Length
+        $errorMessageLength = "ErrorCode: |$($global:ErrorCodeNames[$global:ExitCode])|, Error: ||".Length
         $turncatedErrorMessage = $global:ErrorMessage.Substring(0, [Math]::Min(240 - $errorMessageLength, $global:ErrorMessage.Length))
-        Write-Error "ErrorCode: `+"`"+`"$($global:ErrorCodeNames[$global:ExitCode])`+"`"+`", Error: `+"`"+`"$turncatedErrorMessage`+"`"+`""
+        Write-Error "ErrorCode: |$($global:ErrorCodeNames[$global:ExitCode])|, Error: |$turncatedErrorMessage|"
     } else {
         # Use stdout to return the execution duration when success to simplify the parsing logic
-        Write-Error "ExecutionDuration: $ExecutionDuration."
+        Write-Error "ExecutionDuration: |$ExecutionDuration|."
     }
 }
 `)
