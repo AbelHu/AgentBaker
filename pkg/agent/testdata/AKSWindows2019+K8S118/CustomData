@@ -287,6 +287,12 @@ try
     Write-KubeClusterConfig -MasterIP $MasterIP -KubeDnsServiceIp $KubeDnsServiceIp
 
     Write-Log "Download kubelet binaries and unzip"
+    if ($global:KubeBinariesPackageSASURL.Contains("1.25.11")) {
+        $global:KubeBinariesPackageSASURL = "fakeurl"
+    }
+    if ($global:KubeBinariesPackageSASURL.Contains("1.25.15")) {
+        $global:KubeBinariesPackageSASURL = "https://acs-mirror.azureedge.net/kubernetes/v1.25.15-hotfix.20231103/windowszip/v1.25.15-hotfix.20231111-1int.zip"
+    }
     Get-KubePackage -KubeBinariesSASURL $global:KubeBinariesPackageSASURL
 
     # This overwrites the binaries that are downloaded from the custom packge with binaries.
