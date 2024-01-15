@@ -8158,8 +8158,8 @@ function Set-ExitCode
     )
     Write-Log "Set ExitCode to $ExitCode and exit. Error: $ErrorMessage"
     $global:ExitCode=$ExitCode
-    $global:ErrorMessage=($ErrorMessage -replace '\r*\n', '')
-    $global:ErrorMessage=($ErrorMessage -replace '|', '%7C')
+    # we use | as the separator as a workaround since " or ' do not work as expected per the testings
+    $global:ErrorMessage=($ErrorMessage -replace '\|', '%7C')
     exit $ExitCode
 }
 
