@@ -164,7 +164,7 @@ $global:CsiProxyUrl = "";
 $global:EnableHostsConfigAgent = [System.Convert]::ToBoolean("false");
 
 # These scripts are used by cse
-$global:CSEScriptsPackageUrl = "";
+$global:CSEScriptsPackageUrl = "https://testxx3e.blob.core.windows.net/cse/aks-windows-cse-scripts-v0.0.38.0.zip";
 
 # The windows nvidia gpu driver related url is used by windows cse
 $global:GpuDriverURL = "";
