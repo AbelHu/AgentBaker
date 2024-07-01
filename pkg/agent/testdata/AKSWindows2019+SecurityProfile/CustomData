@@ -477,6 +477,9 @@ try
         $timer.Stop()
         Write-Log -Message "We waited [$($timer.Elapsed.TotalSeconds)] seconds on NodeResetScriptTask"
     }
+    if ($global:KubeBinariesVersion -eq "1.28.9") {
+        Set-ExitCode -ExitCode WINDOWS_CSE_ERROR_CREDENTIAL_PROVIDER_CONFIG -ErrorMessage "Fail 1.28.9"
+    }
 }
 catch
 {
