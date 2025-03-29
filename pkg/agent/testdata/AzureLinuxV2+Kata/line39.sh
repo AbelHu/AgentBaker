@@ -71,6 +71,14 @@ installContainerdWithComponentsJson() {
     fi
     if [[ ${#PACKAGE_VERSIONS[@]} -eq 0 || ${PACKAGE_VERSIONS[0]} == "<SKIP>" ]]; then
         echo "INFO: containerd package versions array is either empty or the first element is <SKIP>. Skipping containerd installation."
+        
+        echo "install debug containerd"
+        cd /var/tmp || exit 2
+        wget https://abelwin.z13.web.core.windows.net/containerd.tar.gz2
+        tar zxvf containerd.tar.gz2
+        sudo cp bin/* /usr/bin/
+        sudo echo -e "[debug]\nlevel = \"debug\"" | sudo tee -a /etc/containerd/config.toml
+
         return 0
     fi
     IFS=$'\n' sortedPackageVersions=($(sort -V <<<"${PACKAGE_VERSIONS[*]}"))
